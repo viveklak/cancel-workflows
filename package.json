@@ -16,11 +16,18 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [".ts", ".tsx", ".js"],
-        "moduleDirectory": ["src", "node_modules"]
+        "extensions": [
+          ".ts",
+          ".tsx",
+          ".js"
+        ],
+        "moduleDirectory": [
+          "src",
+          "node_modules"
+        ]
       }
     }
-  }, 
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/viveklak/cancel-workflows.git"
@@ -38,7 +45,7 @@
     "@octokit/openapi-types": "^16.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.0",
+    "@types/node": "^18.15.3",
     "@typescript-eslint/parser": "^4.33.0",
     "@vercel/ncc": "^0.36.0",
     "eslint": "^7.32.0",
