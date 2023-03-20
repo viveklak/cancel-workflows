@@ -1,5 +1,7 @@
 name: 'Cancel Workflows Action'
-description: 'This action will cancel any previous runs that are not `completed` and that match additional optional criteria for a given workflow'
+description: 'This action will cancel any previous `waiting` workflow runs for a given workflow'
+icon: 'crosshair'
+color: 'red'
 author: 'viveklak'
 inputs:
   workflow-name:
