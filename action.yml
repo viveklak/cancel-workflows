@@ -1,7 +1,8 @@
 name: 'Cancel Workflows Action'
 description: 'This action will cancel any previous `waiting` workflow runs for a given workflow'
-icon: 'crosshair'
-color: 'red'
+branding:
+  icon: 'crosshair'
+  color: 'red'
 author: 'viveklak'
 inputs:
   workflow-name:
