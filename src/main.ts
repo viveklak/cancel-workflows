@@ -9,7 +9,7 @@ function mustGetEnvOrInput(envVar: string, inputName: string): string {
 function getBooleanInput(
   name: string,
   options?: core.InputOptions,
-  defaultValue: boolean = false
+  defaultValue = false
 ): boolean {
   try {
     return core.getBooleanInput(name, options)
