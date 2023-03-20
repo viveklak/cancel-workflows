@@ -44,29 +44,48 @@ const github = __importStar(__nccwpck_require__(5438));
 const run_1 = __nccwpck_require__(7884);
 function mustGetEnvOrInput(envVar, inputName) {
     var _a;
-    return (_a = process.env[envVar]) !== null && _a !== void 0 ? _a : core.getInput(inputName, { required: true });
+    return (_a = process.env[envVar]) !== null && _a !== void 0 ? _a : getInput(inputName, { required: true });
+}
+function getBooleanInput(name, options, defaultValue = false) {
+    try {
+        return core.getBooleanInput(name, options);
+    }
+    catch (ex) {
+        return defaultValue;
+    }
+}
+function getInput(name, options, defaultValue) {
+    try {
+        return core.getInput(name, options);
+    }
+    catch (ex) {
+        if (defaultValue) {
+            return defaultValue;
+        }
+        throw ex;
+    }
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const { repo: { owner, repo }, payload } = github.context;
-        const lastSuccessfulRun = core.getInput('last-successful-run-id', {
+        const lastSuccessfulRun = getInput('last-successful-run-id', {
             required: false
         });
         try {
             yield (0, run_1.run)({
                 owner,
                 repo,
-                githubToken: core.getInput('access-token'),
+                githubToken: mustGetEnvOrInput('GITHUB_TOKEN', 'access-token'),
                 currentWorkflowRunId: Number(mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')),
                 payload,
-                limitToPreviousSuccessfulRunCommit: core.getBooleanInput('limit-to-previous-successful-run-commit', { required: false }),
+                limitToPreviousSuccessfulRunCommit: getBooleanInput('limit-to-previous-successful-run-commit'),
                 lastSuccessfulRunId: lastSuccessfulRun
                     ? Number(lastSuccessfulRun)
                     : undefined,
-                status: core.getInput('status-of-workflows-to-cancel', {
+                status: getInput('status-of-workflows-to-cancel', {
                     required: true
-                }),
-                dryRun: core.getBooleanInput('dry-run', { required: true })
+                }, 'waiting'),
+                dryRun: getBooleanInput('dry-run', { required: false }, true)
             });
         }
         catch (error) {
@@ -170,51 +189,53 @@ function run(opts) {
                     core.info(`Last successfully completed workflow run: ${lastSuccessfulRun.data.id} for commit: ${lastCommit}`);
                 }
             }
-            // sha -> workflow
-            const shasToWorkflowRuns = Object.fromEntries(workflow_runs.map(workflow => [workflow.head_sha, workflow]));
-            const commits = yield octokit.paginate(octokit.rest.repos.listCommits, {
-                owner: opts.owner,
-                repo: opts.repo,
-                sha: current_run.head_sha,
-                per_page: 100
-            }, (response, done) => {
-                const idx = response.data.findIndex(commit => commit.sha === lastCommit);
-                if (idx >= 0) {
-                    done();
-                    return response.data.slice(0, idx);
-                }
-                return response.data;
-            });
-            let toCancel = [];
-            toCancel = commits.reduce((tc, commit) => {
-                if (!(commit.sha in shasToWorkflowRuns)) {
-                    return tc;
-                }
-                const workflow = shasToWorkflowRuns[commit.sha];
-                if (workflow.conclusion !== 'completed' &&
-                    workflow.id !== current_run.id) {
-                    tc.push(workflow);
-                }
-                return tc;
-            }, toCancel);
-            for (const wf of toCancel) {
-                const deployments = yield octokit.rest.actions.getPendingDeploymentsForRun({
-                    owner,
-                    repo,
-                    run_id: wf.id
+            if (workflow_runs.length > 0) {
+                // sha -> workflow
+                const shasToWorkflowRuns = Object.fromEntries(workflow_runs.map(workflow => [workflow.head_sha, workflow]));
+                const commits = yield octokit.paginate(octokit.rest.repos.listCommits, {
+                    owner: opts.owner,
+                    repo: opts.repo,
+                    sha: current_run.head_sha,
+                    per_page: 100
+                }, (response, done) => {
+                    const idx = response.data.findIndex(commit => commit.sha === lastCommit);
+                    if (idx >= 0) {
+                        done();
+                        return response.data.slice(0, idx);
+                    }
+                    return response.data;
                 });
-                core.info(`Will try to cancel workflow run: ${wf.id} waiting on ${deployments.data.map(d => d.environment.name)}`);
-                if (!opts.dryRun && deployments.data.length > 0) {
-                    yield octokit.rest.actions.reviewPendingDeploymentsForRun({
+                let toCancel = [];
+                toCancel = commits.reduce((tc, commit) => {
+                    if (!(commit.sha in shasToWorkflowRuns)) {
+                        return tc;
+                    }
+                    const workflow = shasToWorkflowRuns[commit.sha];
+                    if (workflow.conclusion !== 'completed' &&
+                        workflow.id !== current_run.id) {
+                        tc.push(workflow);
+                    }
+                    return tc;
+                }, toCancel);
+                for (const wf of toCancel) {
+                    const deployments = yield octokit.rest.actions.getPendingDeploymentsForRun({
                         owner,
                         repo,
-                        state: 'rejected',
-                        run_id: wf.id,
-                        environment_ids: deployments.data
-                            .map(d => d.environment.id)
-                            .filter((d) => !!d),
-                        comment: `Superseded by workflow run ${current_run.html_url}`
+                        run_id: wf.id
                     });
+                    core.info(`Will try to cancel workflow run: ${wf.id} waiting on ${deployments.data.map(d => d.environment.name)}`);
+                    if (!opts.dryRun && deployments.data.length > 0) {
+                        yield octokit.rest.actions.reviewPendingDeploymentsForRun({
+                            owner,
+                            repo,
+                            state: 'rejected',
+                            run_id: wf.id,
+                            environment_ids: deployments.data
+                                .map(d => d.environment.id)
+                                .filter((d) => !!d),
+                            comment: `Superseded by workflow run ${current_run.html_url}`
+                        });
+                    }
                 }
             }
             core.info(`Completed cancellations for ${current_run.id}...`);

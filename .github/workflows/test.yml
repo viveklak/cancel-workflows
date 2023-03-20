@@ -9,6 +9,8 @@ on: # rebuild any PRs and main branch changes
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v2
       - name: Set Node.js 16.x
@@ -24,5 +26,3 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./
-        with:
-          milliseconds: 1000
