@@ -1,6 +1,6 @@
 {
   "name": "cancel-workflows",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": false,
   "description": "TypeScript template action",
   "main": "lib/main.js",
