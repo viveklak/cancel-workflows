@@ -3,7 +3,34 @@ import * as github from '@actions/github'
 import {run, workflowRunStatus} from './run'
 
 function mustGetEnvOrInput(envVar: string, inputName: string): string {
-  return process.env[envVar] ?? core.getInput(inputName, {required: true})
+  return process.env[envVar] ?? getInput(inputName, {required: true})
+}
+
+function getBooleanInput(
+  name: string,
+  options?: core.InputOptions,
+  defaultValue: boolean = false
+): boolean {
+  try {
+    return core.getBooleanInput(name, options)
+  } catch (ex) {
+    return defaultValue
+  }
+}
+
+function getInput(
+  name: string,
+  options?: core.InputOptions,
+  defaultValue?: string
+): string {
+  try {
+    return core.getInput(name, options)
+  } catch (ex) {
+    if (defaultValue) {
+      return defaultValue
+    }
+    throw ex
+  }
 }
 
 async function main(): Promise<void> {
@@ -11,29 +38,32 @@ async function main(): Promise<void> {
     repo: {owner, repo},
     payload
   } = github.context
-  const lastSuccessfulRun = core.getInput('last-successful-run-id', {
+  const lastSuccessfulRun = getInput('last-successful-run-id', {
     required: false
   })
   try {
     await run({
       owner,
       repo,
-      githubToken: core.getInput('access-token'),
+      githubToken: mustGetEnvOrInput('GITHUB_TOKEN', 'access-token'),
       currentWorkflowRunId: Number(
         mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')
       ),
       payload,
-      limitToPreviousSuccessfulRunCommit: core.getBooleanInput(
-        'limit-to-previous-successful-run-commit',
-        {required: false}
+      limitToPreviousSuccessfulRunCommit: getBooleanInput(
+        'limit-to-previous-successful-run-commit'
       ),
       lastSuccessfulRunId: lastSuccessfulRun
         ? Number(lastSuccessfulRun)
         : undefined,
-      status: core.getInput('status-of-workflows-to-cancel', {
-        required: true
-      }) as workflowRunStatus,
-      dryRun: core.getBooleanInput('dry-run', {required: true})
+      status: getInput(
+        'status-of-workflows-to-cancel',
+        {
+          required: true
+        },
+        'waiting'
+      ) as workflowRunStatus,
+      dryRun: getBooleanInput('dry-run', {required: false}, true)
     })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

@@ -27,7 +27,7 @@ inputs:
     description: 'The status of workflows to consider cancelling. Defaults to "waiting".'
     default: 'waiting'
   dry-run:
-    description: 'When set doesn't actually delete the workflow runs but simply prints out the workflows that should be deleted.'
+    description: 'When set doesnt actually delete the workflow runs but simply prints out the workflows that should be deleted.'
     default: 'true'
 runs:
   using: 'node16'
