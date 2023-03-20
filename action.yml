@@ -1,11 +1,34 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Cancel Workflows Action'
+description: 'This action will cancel any previous runs that are not `completed` and that match additional optional criteria for a given workflow'
+author: 'viveklak'
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  workflow-name:
+    type: string
+    required: false
+    description: The workflow name to look for superseded workflow runs for. Defaults to determining the workflow that the action was used in.
+  workflow-run-id:
+    type: string
+    description: The workflow run ID to start the search for workflows from. Defaults to the current workflow run.
+    required: false
+    default: ${{ github.run_id }}
+  access-token:
+    description: 'Your GitHub Access Token, defaults to: {{ github.token }}'
+    default: ${{ github.token }}
+    required: false
+  limit-to-previous-successful-run-commit:
+    description: 'Only cancel workflows created for commits since the commit for the previous successfully completed workflow'
+    required: false
+    default: 'false'
+  last-successful-run-id:
+    description: 'Workflow run ID for the last successful run (to use in concert with limit-to-previous-successful-run-commit).'
+    required: false
+  status-of-workflows-to-cancel:
+    type: string
+    description: 'The status of workflows to consider cancelling. Defaults to "waiting".'
+    default: 'waiting'
+  dry-run:
+    description: 'When set doesn't actually delete the workflow runs but simply prints out the workflows that should be deleted.'
+    default: 'true'
 runs:
   using: 'node16'
   main: 'dist/index.js'

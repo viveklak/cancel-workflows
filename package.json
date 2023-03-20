@@ -1,7 +1,7 @@
 {
-  "name": "typescript-action",
+  "name": "cancel-workflows",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "description": "TypeScript template action",
   "main": "lib/main.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/viveklak/cancel-workflows.git"
   },
   "keywords": [
     "actions",
@@ -25,7 +25,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.10.0"
+    "@actions/core": "^1.10.0",
+    "@actions/github": "5.1.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",

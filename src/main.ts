@@ -1,19 +1,31 @@
-import * as core from '@actions/core'
-import {wait} from './wait'
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { run, workflowRunStatus } from './run';
 
-async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
-  }
+function mustGetEnvOrInput(envVar: string, inputName: string): string {
+  return process.env[envVar] ?? core.getInput(inputName, {required: true}); 
 }
 
-run()
+async function main() {
+  const {
+    repo: { owner, repo },
+    payload,
+  } = github.context;
+  const lastSuccessfulRun = core.getInput("last-successful-run-id", {required: false});
+  run({
+    owner: owner,
+    repo: repo, 
+    githubToken: core.getInput('access-token'),
+    currentWorkflowRunId: Number(mustGetEnvOrInput("GITHUB_RUN_ID", "workflow-run-id")),
+    payload: payload,
+    limitToPreviousSuccessfulRunCommit: core.getBooleanInput("limit-to-previous-successful-run-commit", {required: false}),
+    lastSuccessfulRunId: lastSuccessfulRun ? Number(lastSuccessfulRun): undefined,
+    status: core.getInput('status-of-workflows-to-cancel', {required: true}) as workflowRunStatus,
+    dryRun: core.getBooleanInput('dry-run', {required: true}),
+  })
+    .then(() => core.info('Workflow cancel run completed.'))
+    .catch((e: any) => core.setFailed(e.message));
+}
+
+main()
