@@ -5,10 +5,6 @@ branding:
   color: 'red'
 author: 'viveklak'
 inputs:
-  workflow-name:
-    type: string
-    required: false
-    description: The workflow name to look for superseded workflow runs for. Defaults to determining the workflow that the action was used in.
   workflow-run-id:
     type: string
     description: The workflow run ID to start the search for workflows from. Defaults to the current workflow run.
@@ -32,6 +28,10 @@ inputs:
   dry-run:
     description: 'When set doesnt actually delete the workflow runs but simply prints out the workflows that should be deleted.'
     default: 'true'
+  reject-waiting-workflow-runs:
+    type: string
+    description: By default, waiting workflows will be canceled. When set to true, waiting workflows will instead be canceled.
+    default: 'false'
 runs:
   using: 'node16'
   main: 'dist/index.js'

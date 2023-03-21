@@ -14,6 +14,7 @@ export interface RunOpts {
   lastSuccessfulRunId?: number
   status?: workflowRunStatus
   dryRun: boolean
+  rejectWorkflowRuns?: boolean
 }
 
 interface workflowRun {
@@ -133,16 +134,24 @@ export async function run(opts: RunOpts): Promise<void> {
           } waiting on ${deployments.data.map(d => d.environment.name)}`
         )
         if (!opts.dryRun && deployments.data.length > 0) {
-          await octokit.rest.actions.reviewPendingDeploymentsForRun({
-            owner,
-            repo,
-            state: 'rejected',
-            run_id: wf.id,
-            environment_ids: deployments.data
-              .map(d => d.environment.id)
-              .filter((d): d is number => !!d),
-            comment: `Superseded by workflow run ${current_run.html_url}`
-          })
+          if (opts.rejectWorkflowRuns) {
+            await octokit.rest.actions.reviewPendingDeploymentsForRun({
+              owner,
+              repo,
+              state: 'rejected',
+              run_id: wf.id,
+              environment_ids: deployments.data
+                .map(d => d.environment.id)
+                .filter((d): d is number => !!d),
+              comment: `Superseded by workflow run ${current_run.html_url}`
+            })
+          } else {
+            await octokit.rest.actions.cancelWorkflowRun({
+              owner,
+              repo,
+              run_id: wf.id
+            })
+          }
         }
       }
     }
