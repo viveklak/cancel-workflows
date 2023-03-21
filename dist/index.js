@@ -67,7 +67,7 @@ function getInput(name, options, defaultValue) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const { repo: { owner, repo }, payload } = github.context;
+        const { repo: { owner, repo } } = github.context;
         const lastSuccessfulRun = getInput('last-successful-run-id', {
             required: false
         });
@@ -77,7 +77,6 @@ function main() {
                 repo,
                 githubToken: mustGetEnvOrInput('GITHUB_TOKEN', 'access-token'),
                 currentWorkflowRunId: Number(mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')),
-                payload,
                 limitToPreviousSuccessfulRunCommit: getBooleanInput('limit-to-previous-successful-run-commit'),
                 lastSuccessfulRunId: lastSuccessfulRun
                     ? Number(lastSuccessfulRun)
@@ -141,21 +140,19 @@ exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 function run(opts) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const { owner, repo, payload } = opts;
-        let branch = '';
-        if (payload.pull_request) {
-            branch = payload.pull_request.head.ref;
-        }
-        else if (payload.workflow_run) {
-            branch = payload.workflow_run.head_branch;
-        }
+        const { owner, repo } = opts;
         const octokit = github.getOctokit(opts.githubToken);
+        const repoInfo = yield octokit.rest.repos.get({ owner, repo });
+        const defaultBranch = repoInfo.data.default_branch;
         const { data: current_run } = yield octokit.rest.actions.getWorkflowRun({
             owner,
             repo,
             run_id: opts.currentWorkflowRunId
         });
+        const branch = (_a = current_run.head_branch) !== null && _a !== void 0 ? _a : defaultBranch;
+        core.info(`Resolved run ${opts.currentWorkflowRunId} to branch: ${branch}`);
         const workflow_id = String(current_run.workflow_id);
         try {
             const { data: { workflow_runs } } = yield octokit.rest.actions.listWorkflowRuns(Object.assign({ per_page: 100, owner,

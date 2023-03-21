@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
 /* eslint-disable  import/no-unresolved */
 import {components} from '@octokit/openapi-types'
 
@@ -11,7 +10,6 @@ export interface RunOpts {
   repo: string
   githubToken: string
   currentWorkflowRunId: number
-  payload: WebhookPayload
   limitToPreviousSuccessfulRunCommit: boolean
   lastSuccessfulRunId?: number
   status?: workflowRunStatus
@@ -24,20 +22,20 @@ interface workflowRun {
 }
 
 export async function run(opts: RunOpts): Promise<void> {
-  const {owner, repo, payload} = opts
-  let branch = ''
-  if (payload.pull_request) {
-    branch = payload.pull_request.head.ref
-  } else if (payload.workflow_run) {
-    branch = payload.workflow_run.head_branch
-  }
+  const {owner, repo} = opts
 
   const octokit = github.getOctokit(opts.githubToken)
+
+  const repoInfo = await octokit.rest.repos.get({owner, repo})
+  const defaultBranch = repoInfo.data.default_branch
+
   const {data: current_run} = await octokit.rest.actions.getWorkflowRun({
     owner,
     repo,
     run_id: opts.currentWorkflowRunId
   })
+  const branch = current_run.head_branch ?? defaultBranch
+  core.info(`Resolved run ${opts.currentWorkflowRunId} to branch: ${branch}`)
 
   const workflow_id = String(current_run.workflow_id)
   try {
