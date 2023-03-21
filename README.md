@@ -19,6 +19,8 @@ This action could be added at the end of the deployment workflow to determine al
 1. Workflow runs triggered off the same branch but later commit than the currently approved workflow run
 2. Workflow run is currently in `waiting` state
 
+These workflow runs will be subject to cancellation (or rejection if preferred).
+
 Alternatively this could be added into a dispatch workflow to periodically cleanup old workflow runs
 
 # How to use it?

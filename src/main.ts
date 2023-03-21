@@ -69,7 +69,12 @@ async function main(): Promise<void> {
         },
         'waiting'
       ) as workflowRunStatus,
-      dryRun: getBooleanInput('dry-run', {required: false}, true)
+      dryRun: getBooleanInput('dry-run', {required: false}, true),
+      rejectWorkflowRuns: getBooleanInput(
+        'reject-waiting-workflow-runs',
+        {required: false},
+        false
+      )
     })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
