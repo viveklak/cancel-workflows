@@ -23,7 +23,69 @@ Alternatively this could be added into a dispatch workflow to periodically clean
 
 # How to use it?
 
-## TODO
+## From deployment workflow
+
+```
+jobs:
+...
+  deploy-prod:
+    name: Deploy Prod
+    runs-on: ubuntu-latest
+    environment: prod # Here prod has manual approval required
+    permissions:
+      contents: read
+      id-token: write
+  cancel-superseded-workflows:
+    runs-on: ubuntu-latest
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [deploy-prod]
+    steps:
+      - uses: viveklak/cancel-workflows@v1.1.1
+        with:
+          # workflow-run-id will be set to current workflow run ID
+          # workflow-run-id: ${{ inputs.workflow-run-id }}
+          limit-to-previous-successful-run-commit: "true"
+          # Flip this when you are ready to cancel workflows
+          dry-run: "true"
+```
+
+## As dispatch workflow
+
+```
+name: cancel-superseded-workflows
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow-run-id:
+        type: string
+        description: The currently preferred workflow run to supersede previous workflows runs with
+        required: true
+      last-successful-run-id:
+        type: string
+        required: false
+        description: The workflow run to stop at when looking for cancelable workflows. Defaults to most recent successful workflow otherwise.
+      dry-run:
+        type: string
+        required: false
+        description: Don't actually cancel but just print the workflows to be cancelled. Default is true.
+        # Flip this when you are ready to cancel workflows
+        default: "true"
+
+jobs:
+  cancel-superseded-workflows:
+    name: Cancel Superseded Workflows
+    runs-on: ubuntu-latest
+    concurrency: cancel-superseded-workflows
+    steps:
+      - uses: viveklak/cancel-workflows@v1.1.1
+        with:
+          workflow-run-id: ${{ inputs.workflow-run-id }}
+          limit-to-previous-successful-run-commit: "true"
+          last-successful-run-id: ${{ inputs.last-successful-run-id }}
+          dry-run: ${{ inputs.dry-run }}
+
+```
 
 # Acknowledgement
 
