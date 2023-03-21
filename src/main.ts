@@ -35,8 +35,7 @@ function getInput(
 
 async function main(): Promise<void> {
   const {
-    repo: {owner, repo},
-    payload
+    repo: {owner, repo}
   } = github.context
   const lastSuccessfulRun = getInput('last-successful-run-id', {
     required: false
@@ -49,7 +48,6 @@ async function main(): Promise<void> {
       currentWorkflowRunId: Number(
         mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')
       ),
-      payload,
       limitToPreviousSuccessfulRunCommit: getBooleanInput(
         'limit-to-previous-successful-run-commit'
       ),

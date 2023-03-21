@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
 /* eslint-disable  import/no-unresolved */
 import {components} from '@octokit/openapi-types'
 
