@@ -91,7 +91,8 @@ function main() {
                 status: getInput('status-of-workflows-to-cancel', {
                     required: true
                 }, 'waiting'),
-                dryRun: getBooleanInput('dry-run', { required: false }, true)
+                dryRun: getBooleanInput('dry-run', { required: false }, true),
+                rejectWorkflowRuns: getBooleanInput('reject-waiting-workflow-runs', { required: false }, false)
             });
         }
         catch (error) {
@@ -229,16 +230,25 @@ function run(opts) {
                     });
                     core.info(`Will try to cancel workflow run: ${wf.id} waiting on ${deployments.data.map(d => d.environment.name)}`);
                     if (!opts.dryRun && deployments.data.length > 0) {
-                        yield octokit.rest.actions.reviewPendingDeploymentsForRun({
-                            owner,
-                            repo,
-                            state: 'rejected',
-                            run_id: wf.id,
-                            environment_ids: deployments.data
-                                .map(d => d.environment.id)
-                                .filter((d) => !!d),
-                            comment: `Superseded by workflow run ${current_run.html_url}`
-                        });
+                        if (opts.rejectWorkflowRuns) {
+                            yield octokit.rest.actions.reviewPendingDeploymentsForRun({
+                                owner,
+                                repo,
+                                state: 'rejected',
+                                run_id: wf.id,
+                                environment_ids: deployments.data
+                                    .map(d => d.environment.id)
+                                    .filter((d) => !!d),
+                                comment: `Superseded by workflow run ${current_run.html_url}`
+                            });
+                        }
+                        else {
+                            yield octokit.rest.actions.cancelWorkflowRun({
+                                owner,
+                                repo,
+                                run_id: wf.id
+                            });
+                        }
                     }
                 }
             }
