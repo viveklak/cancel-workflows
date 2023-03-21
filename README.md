@@ -38,7 +38,7 @@ jobs:
     steps:
       ...
       - name: Run SUCCESS script
-        run: echo Success
+        run: echo success
 
   cancel-superseded-workflows:
     runs-on: ubuntu-latest
