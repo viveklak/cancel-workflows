@@ -35,6 +35,11 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    steps:
+      ...
+      - name: Run SUCCESS script
+        run: echo Success
+
   cancel-superseded-workflows:
     runs-on: ubuntu-latest
     if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
