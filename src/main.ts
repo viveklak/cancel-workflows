@@ -2,8 +2,16 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {run, workflowRunStatus} from './run'
 
-function mustGetEnvOrInput(envVar: string, inputName: string): string {
-  return process.env[envVar] ?? getInput(inputName, {required: true})
+function mustGetInputOrEnv(inputName: string, envVar: string): string {
+  const val = getInput(inputName, {required: false})
+  if (val !== '') {
+    return val
+  }
+  const env = process.env[envVar]
+  if (env === undefined) {
+    throw Error(`Neither input: ${inputName} nor env var ${envVar} are defined`)
+  }
+  return env
 }
 
 function getBooleanInput(
@@ -44,9 +52,9 @@ async function main(): Promise<void> {
     await run({
       owner,
       repo,
-      githubToken: mustGetEnvOrInput('GITHUB_TOKEN', 'access-token'),
+      githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
       currentWorkflowRunId: Number(
-        mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')
+        mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')
       ),
       limitToPreviousSuccessfulRunCommit: getBooleanInput(
         'limit-to-previous-successful-run-commit'
