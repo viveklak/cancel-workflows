@@ -42,9 +42,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const run_1 = __nccwpck_require__(7884);
-function mustGetEnvOrInput(envVar, inputName) {
-    var _a;
-    return (_a = process.env[envVar]) !== null && _a !== void 0 ? _a : getInput(inputName, { required: true });
+function mustGetInputOrEnv(inputName, envVar) {
+    const val = getInput(inputName, { required: false });
+    if (val !== '') {
+        return val;
+    }
+    const env = process.env[envVar];
+    if (env === undefined) {
+        throw Error(`Neither input: ${inputName} nor env var ${envVar} are defined`);
+    }
+    return env;
 }
 function getBooleanInput(name, options, defaultValue = false) {
     try {
@@ -75,8 +82,8 @@ function main() {
             yield (0, run_1.run)({
                 owner,
                 repo,
-                githubToken: mustGetEnvOrInput('GITHUB_TOKEN', 'access-token'),
-                currentWorkflowRunId: Number(mustGetEnvOrInput('GITHUB_RUN_ID', 'workflow-run-id')),
+                githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
+                currentWorkflowRunId: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
                 limitToPreviousSuccessfulRunCommit: getBooleanInput('limit-to-previous-successful-run-commit'),
                 lastSuccessfulRunId: lastSuccessfulRun
                     ? Number(lastSuccessfulRun)
