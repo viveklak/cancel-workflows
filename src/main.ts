@@ -77,7 +77,12 @@ async function main(): Promise<void> {
       )
     })
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) {
+      core.error(
+        error.stack ? `${error.message}:\n${error.stack}` : error.message
+      )
+      core.setFailed(error.message)
+    }
   }
 }
 

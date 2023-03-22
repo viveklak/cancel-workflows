@@ -62,8 +62,13 @@ export async function run(opts: RunOpts): Promise<void> {
           status: 'success',
           per_page: 10
         })
-        if (completed.data.workflow_runs.length > 0) {
-          const [first] = completed.data.workflow_runs
+        // We may be run as a dispatch workflow from the currentWorkflowRunId which
+        // could be marked as complete already. Filter it out.
+        const previouslyCompleted = completed.data.workflow_runs.filter(
+          w => w.id !== opts.currentWorkflowRunId
+        )
+        if (previouslyCompleted.length > 0) {
+          const [first] = previouslyCompleted
           lastCommit = first.head_sha
           core.info(
             `Last successfully completed workflow run: ${first.id} for commit: ${lastCommit}`
