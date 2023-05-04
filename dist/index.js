@@ -165,10 +165,24 @@ function run(opts) {
         core.info(`Resolved run ${opts.currentWorkflowRunId} to branch: ${branch}`);
         const workflow_id = String(current_run.workflow_id);
         try {
-            const { data: { workflow_runs } } = yield octokit.rest.actions.listWorkflowRuns(Object.assign({ per_page: 100, owner,
+            const workflow_runs = yield octokit.paginate(octokit.rest.actions.listWorkflowRuns, {
+                per_page: 100,
+                owner,
                 repo,
                 workflow_id,
-                branch }, (opts.status && { status: opts.status })));
+                branch
+            }, (response, done) => {
+                let res = response.data.workflow_runs;
+                if (opts.status) {
+                    res = res.filter(resp => resp.status === opts.status);
+                }
+                // Don't actually want to look through all the runs - if we find some matching the status, lets return
+                //
+                if (res.length > 0) {
+                    done();
+                }
+                return res;
+            });
             let lastCommit = '';
             if (opts.limitToPreviousSuccessfulRunCommit) {
                 if (!opts.lastSuccessfulRunId) {
