@@ -52,7 +52,9 @@ export async function run(opts: RunOpts): Promise<void> {
       (response, done) => {
         let res = response.data.workflow_runs
         if (opts.status) {
-          res = res.filter(resp => resp.status === opts.status)
+          res = response.data.workflow_runs.filter(
+            resp => resp.status === opts.status
+          )
         }
         // Don't actually want to look through all the runs - if we find some matching the status, lets return
         //
