@@ -40,16 +40,28 @@ export async function run(opts: RunOpts): Promise<void> {
 
   const workflow_id = String(current_run.workflow_id)
   try {
-    const {
-      data: {workflow_runs}
-    } = await octokit.rest.actions.listWorkflowRuns({
-      per_page: 100,
-      owner,
-      repo,
-      workflow_id,
-      branch,
-      ...(opts.status && {status: opts.status})
-    })
+    const workflow_runs = await octokit.paginate(
+      octokit.rest.actions.listWorkflowRuns,
+      {
+        per_page: 100,
+        owner,
+        repo,
+        workflow_id,
+        branch
+      },
+      (response, done) => {
+        let res = response.data.workflow_runs
+        if (opts.status) {
+          res = res.filter(resp => resp.status === opts.status)
+        }
+        // Don't actually want to look through all the runs - if we find some matching the status, lets return
+        //
+        if (res.length > 0) {
+          done()
+        }
+        return res
+      }
+    )
 
     let lastCommit = ''
     if (opts.limitToPreviousSuccessfulRunCommit) {
