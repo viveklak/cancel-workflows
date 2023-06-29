@@ -1,11 +1,11 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import { RunOpts, run, workflowRunStatus } from './run';
+import * as core from '@actions/core'
+import * as github from '@actions/github'
+import {RunOpts, run, workflowRunStatus} from './run'
 
 async function main() {
   const {
-    repo: { owner, repo }
-  } = github.context;
+    repo: {owner, repo}
+  } = github.context
 
   // Define your inputs to simulate the behavior of your GitHub Action
   const inputs: RunOpts = {
@@ -18,20 +18,20 @@ async function main() {
     status: 'waiting', // Specify the desired status of workflows to cancel
     dryRun: true, // Set to true or false based on your requirements
     rejectWorkflowRuns: false, // Set to true or false based on your requirements
-    tagSuperseededWorkflowsWith: 'deployed', // Specify the tag to be added to superseeded workflows, if applicable
-  };
+    tagSuperseededWorkflowsWith: 'deployed' // Specify the tag to be added to superseeded workflows, if applicable
+  }
 
   try {
-    await run(inputs);
+    await run(inputs)
   } catch (error) {
     if (error instanceof Error) {
       core.error(
         error.stack ? `${error.message}:\n${error.stack}` : error.message
-      );
-      core.setFailed(error.message);
+      )
+      core.setFailed(error.message)
     }
   }
 }
 
-export default main;
-main();
+export default main
+main()

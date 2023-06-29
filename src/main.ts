@@ -78,7 +78,7 @@ async function main(): Promise<void> {
       tagSuperseededWorkflowsWith: getInput(
         'tag-superseeded-workflows-with',
         {required: false},
-        ""
+        ''
       )
     })
   } catch (error) {
