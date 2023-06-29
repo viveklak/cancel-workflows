@@ -32,6 +32,10 @@ inputs:
     type: string
     description: By default, waiting workflows will be canceled. When set to true, waiting workflows will instead be canceled.
     default: 'false'
+  tag-superseeded-workflows-with:
+    type: string
+    descroption: 'When set, will tag superseeded workflows with the given tag.'
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'
