@@ -174,7 +174,7 @@ export async function run(opts: RunOpts): Promise<void> {
           }
         }
         // Tag successful pull requests
-        if (opts.tagSuperseededWorkflowsWith != "" && deployments.data.length > 0 ) {
+        if (opts.tagSuperseededWorkflowsWith !== "" && deployments.data.length > 0 ) {
           if (wf.head_commit) {
             const response = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
               owner,
