@@ -34,8 +34,8 @@ inputs:
     default: 'false'
   tag-superseeded-workflows-with:
     type: string
-    descroption: 'When set, will tag superseeded workflows with the given tag.'
-    default: ''
+    required: false
+    description: 'When set, will tag superseeded workflows with the given tag.'
 runs:
   using: 'node16'
   main: 'dist/index.js'

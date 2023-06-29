@@ -174,7 +174,7 @@ export async function run(opts: RunOpts): Promise<void> {
           }
         }
         // Tag successful pull requests
-        if (opts.tagSuperseededWorkflowsWith !== "" && deployments.data.length > 0 ) {
+        if (opts.tagSuperseededWorkflowsWith !== undefined && opts.tagSuperseededWorkflowsWith !== "" && deployments.data.length > 0 ) {
           if (wf.head_commit) {
             const response = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
               owner,
@@ -185,20 +185,30 @@ export async function run(opts: RunOpts): Promise<void> {
             if (response.data.length > 0) {
               // Add a comment to the corresponding pull request
               const pullRequest = response.data[0]
-              if (pullRequest) {
-                if (!opts.dryRun) {
-                  core.info(`Tagging pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`);
-                  await octokit.rest.pulls.update({
-                    owner,
-                    repo,
-                    pull_number: pullRequest.number,
-                    labels: [opts.tagSuperseededWorkflowsWith],
-                  });
+              if (!opts.dryRun) {
+                // Get the existing labels of the pull request
+                const currentLabels = pullRequest.labels.map(label => label.name)
+                // Add the new tag to the existing labels
+                const updatedLabels = [...currentLabels, opts.tagSuperseededWorkflowsWith]
+        
+                const updatedPullRequest = await octokit.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: pullRequest.number,
+                  labels: updatedLabels
+                })
+                if (updatedPullRequest.status === 200) {
+                  core.info(
+                    `Successfully tagged pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`
+                  )
                 } else {
-                  core.info(`Dry run: tagged pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`);
+                  // Handle the case when the update request was not successful
+                  core.warning('Failed to update pull request with the new tag')
                 }
               } else {
-                core.info(`No pull request found for commit ${wf.head_commit.id}`);
+                core.info(
+                  `Dry run: tagged pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`
+                )
               }
             }
           }
