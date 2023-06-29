@@ -92,7 +92,8 @@ function main() {
                     required: true
                 }, 'waiting'),
                 dryRun: getBooleanInput('dry-run', { required: false }, true),
-                rejectWorkflowRuns: getBooleanInput('reject-waiting-workflow-runs', { required: false }, false)
+                rejectWorkflowRuns: getBooleanInput('reject-waiting-workflow-runs', { required: false }, false),
+                tagSuperseededWorkflowsWith: getInput('tag-superseeded-workflows-with', { required: false }, '')
             });
         }
         catch (error) {
@@ -266,6 +267,47 @@ function run(opts) {
                                 repo,
                                 run_id: wf.id
                             });
+                        }
+                    }
+                    // Tag successful pull requests
+                    if (opts.tagSuperseededWorkflowsWith !== undefined &&
+                        opts.tagSuperseededWorkflowsWith !== '' &&
+                        deployments.data.length > 0) {
+                        if (wf.head_commit) {
+                            const response = yield octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+                                owner,
+                                repo,
+                                commit_sha: wf.head_commit.id
+                            });
+                            if (response.data.length > 0) {
+                                // Add a comment to the corresponding pull request
+                                const pullRequest = response.data[0];
+                                if (!opts.dryRun) {
+                                    // Get the existing labels of the pull request
+                                    const currentLabels = pullRequest.labels.map(label => label.name);
+                                    // Add the new tag to the existing labels
+                                    const updatedLabels = [
+                                        ...currentLabels,
+                                        opts.tagSuperseededWorkflowsWith
+                                    ];
+                                    const updatedPullRequest = yield octokit.rest.issues.update({
+                                        owner,
+                                        repo,
+                                        issue_number: pullRequest.number,
+                                        labels: updatedLabels
+                                    });
+                                    if (updatedPullRequest.status === 200) {
+                                        core.info(`Successfully tagged pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`);
+                                    }
+                                    else {
+                                        // Handle the case when the update request was not successful
+                                        core.warning('Failed to update pull request with the new tag');
+                                    }
+                                }
+                                else {
+                                    core.info(`Dry run: tagged pull request ${pullRequest.url} with ${opts.tagSuperseededWorkflowsWith}`);
+                                }
+                            }
                         }
                     }
                 }

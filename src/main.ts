@@ -74,6 +74,11 @@ async function main(): Promise<void> {
         'reject-waiting-workflow-runs',
         {required: false},
         false
+      ),
+      tagSuperseededWorkflowsWith: getInput(
+        'tag-superseeded-workflows-with',
+        {required: false},
+        ''
       )
     })
   } catch (error) {
